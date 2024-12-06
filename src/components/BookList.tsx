@@ -14,11 +14,12 @@ const BookList: React.FC = () => {
   const [editingBook, setEditingBook] = useState<Book | null>(null);
   const [newTitle, setNewTitle] = useState<string>("");
   const [newAuthor, setNewAuthor] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Fetch books from the backend
-  const fetchBooks = async () => {
+  const fetchBooks = async (query = "") => {
     try {
-      const response = await axios.get("/books");
+      const response = await axios.get(`/books?query=${query}`);
       setBooks(response.data);
     } catch (error) {
       console.error("Error fetching books:", error);
@@ -26,10 +27,9 @@ const BookList: React.FC = () => {
     }
   };
 
-  // Fetch books on component mount
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    fetchBooks(searchQuery);
+  }, [searchQuery]);
 
   // Handle delete
   const handleDelete = async (id: number) => {
@@ -60,15 +60,25 @@ const BookList: React.FC = () => {
     }
 
     try {
-      const updatedBook = await axios.put(`/books/${id}`, {
+      // Sending PUT request to update the book
+      const response = await axios.put(`/books/${id}`, {
         title: newTitle,
         author: newAuthor,
       });
+
+      // Check if response data has the updated book
+      const updatedBook = response.data;
+
+      // Updating the book list with the updated book
       setBooks((prevBooks) =>
         prevBooks.map((book) =>
-          book.id === id ? { ...book, ...updatedBook.data } : book
+          book.id === id
+            ? { ...book, title: updatedBook.title, author: updatedBook.author }
+            : book
         )
       );
+
+      // Reset editing state and input fields
       setEditingBook(null);
       setNewTitle("");
       setNewAuthor("");
@@ -82,6 +92,15 @@ const BookList: React.FC = () => {
   return (
     <div className="container">
       <AddBookForm setBooks={setBooks} />
+
+      <div className="search-bar">
+        <input
+          type="text"
+          placeholder="Search by title or author"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
       <div className="book-list">
         <h1>Book List</h1>
