@@ -26,7 +26,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ setBooks }) => {
     }
 
     try {
-      const response = await axios.post("http://localhost:3000/books", {
+      const response = await axios.post("/books", {
         title,
         author,
       });
