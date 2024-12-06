@@ -19,18 +19,14 @@ const BookList: React.FC = () => {
   // Fetch books from the backend
   const fetchBooks = async (query = "") => {
     try {
-      const response = await axios.get(`/books?query=${query}`);
+      const url = query ? `/books/search?query=${query}` : `/books`;
+      const response = await axios.get(url);
       setBooks(response.data);
     } catch (error) {
       console.error("Error fetching books:", error);
       alert("Failed to fetch books. Please try again.");
     }
   };
-
-  useEffect(() => {
-    fetchBooks(searchQuery);
-  }, [searchQuery]);
-
   // Handle delete
   const handleDelete = async (id: number) => {
     try {
@@ -60,25 +56,18 @@ const BookList: React.FC = () => {
     }
 
     try {
-      // Sending PUT request to update the book
       const response = await axios.put(`/books/${id}`, {
         title: newTitle,
         author: newAuthor,
       });
 
-      // Check if response data has the updated book
       const updatedBook = response.data;
-
-      // Updating the book list with the updated book
       setBooks((prevBooks) =>
         prevBooks.map((book) =>
-          book.id === id
-            ? { ...book, title: updatedBook.title, author: updatedBook.author }
-            : book
+          book.id === id ? { ...book, ...updatedBook } : book
         )
       );
 
-      // Reset editing state and input fields
       setEditingBook(null);
       setNewTitle("");
       setNewAuthor("");
@@ -88,6 +77,10 @@ const BookList: React.FC = () => {
       alert("Failed to update book. Please try again.");
     }
   };
+
+  useEffect(() => {
+    fetchBooks(searchQuery);
+  }, [searchQuery]);
 
   return (
     <div className="container">
