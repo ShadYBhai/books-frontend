@@ -3,7 +3,6 @@ import axios from "axios";
 import AddBookForm from "./AddBookForm";
 import "../App.css";
 
-// Book type interface
 interface Book {
   id: number;
   title: string;
@@ -12,11 +11,14 @@ interface Book {
 
 const BookList: React.FC = () => {
   const [books, setBooks] = useState<Book[]>([]);
+  const [editingBook, setEditingBook] = useState<Book | null>(null);
+  const [newTitle, setNewTitle] = useState<string>("");
+  const [newAuthor, setNewAuthor] = useState<string>("");
 
   // Fetch books from the backend
   const fetchBooks = async () => {
     try {
-      const response = await axios.get("http://localhost:3000/books");
+      const response = await axios.get("/books");
       setBooks(response.data);
     } catch (error) {
       console.error("Error fetching books:", error);
@@ -29,10 +31,58 @@ const BookList: React.FC = () => {
     fetchBooks();
   }, []);
 
+  // Handle delete
+  const handleDelete = async (id: number) => {
+    try {
+      const response = await axios.delete(`/books/${id}`);
+      if (response.status === 200) {
+        setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
+        alert("Book deleted!");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      alert("Failed to delete book. Please try again.");
+    }
+  };
+
+  // Handle edit
+  const handleEdit = (book: Book) => {
+    setEditingBook(book);
+    setNewTitle(book.title);
+    setNewAuthor(book.author);
+  };
+
+  // Handle submit update
+  const handleUpdate = async (id: number) => {
+    if (!newTitle || !newAuthor) {
+      alert("Please fill in both fields");
+      return;
+    }
+
+    try {
+      const updatedBook = await axios.put(`/books/${id}`, {
+        title: newTitle,
+        author: newAuthor,
+      });
+      setBooks((prevBooks) =>
+        prevBooks.map((book) =>
+          book.id === id ? { ...book, ...updatedBook.data } : book
+        )
+      );
+      setEditingBook(null);
+      setNewTitle("");
+      setNewAuthor("");
+      alert("Book updated!");
+    } catch (error) {
+      console.error("Error updating book:", error);
+      alert("Failed to update book. Please try again.");
+    }
+  };
+
   return (
     <div className="container">
-      {/* Pass setBooks to AddBookForm to allow adding books dynamically */}
       <AddBookForm setBooks={setBooks} />
+
       <div className="book-list">
         <h1>Book List</h1>
         {books.length > 0 ? (
@@ -42,6 +92,16 @@ const BookList: React.FC = () => {
                 <div className="book-card">
                   <h3>{book.title}</h3>
                   <p>{book.author}</p>
+
+                  <button className="btn-edit" onClick={() => handleEdit(book)}>
+                    Edit
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => handleDelete(book.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}
@@ -50,6 +110,39 @@ const BookList: React.FC = () => {
           <p>No books available.</p>
         )}
       </div>
+
+      {editingBook && (
+        <div className="edit-form">
+          <h2>Edit Book</h2>
+          <div className="input-group">
+            <label>Title:</label>
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Enter book title"
+            />
+          </div>
+          <div className="input-group">
+            <label>Author:</label>
+            <input
+              type="text"
+              value={newAuthor}
+              onChange={(e) => setNewAuthor(e.target.value)}
+              placeholder="Enter author name"
+            />
+          </div>
+          <button
+            onClick={() => handleUpdate(editingBook.id)}
+            className="btn-submit"
+          >
+            Update Book
+          </button>
+          <button onClick={() => setEditingBook(null)} className="btn-cancel">
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 };
