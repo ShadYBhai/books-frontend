@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // If you're using React Router
+import { useNavigate } from "react-router-dom";
 import "./navbar.css";
 
 const Navbar: React.FC = () => {

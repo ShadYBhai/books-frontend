@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Book type interface
 interface Book {
-  id: number;
+  _id: string;
   title: string;
   author: string;
 }
@@ -33,7 +33,7 @@ const AddBookForm: React.FC<AddBookFormProps> = ({ setBooks }) => {
 
       setBooks((prevBooks) => [
         ...prevBooks,
-        { id: response.data.id, title, author },
+        { _id: response.data._id, title, author },
       ]);
 
       setTitle("");

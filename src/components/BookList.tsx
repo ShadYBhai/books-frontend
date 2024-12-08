@@ -4,7 +4,7 @@ import AddBookForm from "./AddBookForm";
 import "../App.css";
 
 interface Book {
-  id: number;
+  _id: string;
   title: string;
   author: string;
 }
@@ -28,11 +28,11 @@ const BookList: React.FC = () => {
     }
   };
   // Handle delete
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (_id: string) => {
     try {
-      const response = await axios.delete(`/books/${id}`);
+      const response = await axios.delete(`/books/${_id}`);
       if (response.status === 200) {
-        setBooks((prevBooks) => prevBooks.filter((book) => book.id !== id));
+        setBooks((prevBooks) => prevBooks.filter((book) => book._id !== _id));
         alert("Book deleted!");
       }
     } catch (error) {
@@ -49,22 +49,23 @@ const BookList: React.FC = () => {
   };
 
   // Handle submit update
-  const handleUpdate = async (id: number) => {
+  const handleUpdate = async (_id: string) => {
+    // Keep _id as string if backend expects string
     if (!newTitle || !newAuthor) {
       alert("Please fill in both fields");
       return;
     }
 
     try {
-      const response = await axios.put(`/books/${id}`, {
+      const response = await axios.put(`/books/${_id}`, {
         title: newTitle,
         author: newAuthor,
       });
 
       const updatedBook = response.data;
       setBooks((prevBooks) =>
-        prevBooks.map((book) =>
-          book.id === id ? { ...book, ...updatedBook } : book
+        prevBooks.map(
+          (book) => (book._id === _id ? { ...book, ...updatedBook } : book) // Convert book.id to string
         )
       );
 
@@ -81,6 +82,8 @@ const BookList: React.FC = () => {
   useEffect(() => {
     fetchBooks(searchQuery);
   }, [searchQuery]);
+
+  console.log(books);
 
   return (
     <div className="container">
@@ -100,7 +103,7 @@ const BookList: React.FC = () => {
         {books.length > 0 ? (
           <ul>
             {books.map((book) => (
-              <li key={book.id}>
+              <li key={book._id}>
                 <div className="book-card">
                   <h3>{book.title}</h3>
                   <p>{book.author}</p>
@@ -110,7 +113,7 @@ const BookList: React.FC = () => {
                   </button>
                   <button
                     className="btn-delete"
-                    onClick={() => handleDelete(book.id)}
+                    onClick={() => handleDelete(book._id)}
                   >
                     Delete
                   </button>
@@ -145,7 +148,13 @@ const BookList: React.FC = () => {
             />
           </div>
           <button
-            onClick={() => handleUpdate(editingBook.id)}
+            onClick={() => {
+              if (editingBook) {
+                handleUpdate(editingBook._id);
+              } else {
+                alert("No book selected for editing.");
+              }
+            }}
             className="btn-submit"
           >
             Update Book
